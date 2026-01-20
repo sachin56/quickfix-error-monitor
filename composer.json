@@ -1,0 +1,23 @@
+{
+  "name": "quickfix/error-monitor",
+  "description": "Laravel error monitoring package",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "QuickFix\\ErrorMonitor\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "QuickFix\\ErrorMonitor\\ErrorMonitorServiceProvider"
+      ]
+    }
+  },
+  "require": {
+    "php": ">=8.1",
+    "illuminate/support": "^10|^11",
+    "illuminate/http": "^11.47"
+  }
+}
