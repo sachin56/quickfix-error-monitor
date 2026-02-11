@@ -13,7 +13,7 @@ class ErrorPayload
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-            'trace' => self::cleanTrace($e->getTrace()),
+            'trace' => array_slice($e->getTrace(), 0, 10),
             'url' => request()->fullUrl(),
             'method' => request()->method(),
             'user_id' => auth()->id(),
@@ -32,11 +32,6 @@ class ErrorPayload
             'env' => app()->environment(),
             'time' => now()->toDateTimeString(),
         ];
-    }
-
-    protected static function cleanTrace(array $trace): array
-    {
-        return array_slice($trace, 0, 10);
     }
 
     protected static function sanitize(array $data): array

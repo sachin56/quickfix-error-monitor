@@ -3,6 +3,12 @@
     "description": "Real-time error monitoring and notification plugin for Laravel 11 & 12.",
     "type": "library",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Heshan Munasinghe",
+            "role": "Developer"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "illuminate/support": "^11.0|^12.0",
