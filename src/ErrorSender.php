@@ -2,9 +2,10 @@
 
 namespace QuickFix\ErrorMonitor;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Throwable;
+use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 class ErrorSender
 {
@@ -19,31 +20,30 @@ class ErrorSender
         self::$isReporting = true;
 
         try {
-            Http::timeout(3)
-                ->withHeaders(self::headers())
-                ->post(config('quickfix.endpoint'), ErrorPayload::fromException($exception));
+            $messaging = app('firebase.messaging');
+            $fcmToken = config('quickfix.fcm_token');
+
+            if (!$fcmToken) {
+                Log::channel('single')->debug('[QuickFix] Missing FCM_TOKEN in .env');
+                return;
+            }
+
+            $message = CloudMessage::withTarget('token', $fcmToken)
+                ->withNotification(Notification::create(
+                    '🚨 Error: ' . app()->environment(),
+                    substr($exception->getMessage(), 0, 150)
+                ))
+                ->withData([
+                    'file' => (string) $exception->getFile(),
+                    'line' => (string) $exception->getLine(),
+                    'type' => (string) get_class($exception),
+                ]);
+
+            $messaging->send($message);
+
         } catch (Throwable $e) {
-            // Silently log to local file only so we don't trigger the listener again
-            Log::channel('single')->debug('[QuickFix] Failed sending exception: ' . $e->getMessage());
-        } finally {
-            self::$isReporting = false;
-        }
-    }
-
-    public static function sendMessage(string $message, array $context = []): void
-    {
-        if (self::$isReporting || !self::shouldSend()) {
-            return;
-        }
-
-        self::$isReporting = true;
-
-        try {
-            Http::timeout(3)
-                ->withHeaders(self::headers())
-                ->post(config('quickfix.endpoint'), ErrorPayload::fromMessage($message, $context));
-        } catch (Throwable $e) {
-            Log::channel('single')->debug('[QuickFix] Failed sending log message');
+            // Log locally only to avoid recursion
+            Log::channel('single')->debug('[QuickFix] Firebase Failed: ' . $e->getMessage());
         } finally {
             self::$isReporting = false;
         }
@@ -51,18 +51,7 @@ class ErrorSender
 
     protected static function shouldSend(): bool
     {
-        return config('quickfix.enabled')
-            && config('quickfix.endpoint')
+        return config('quickfix.enabled') 
             && in_array(app()->environment(), config('quickfix.environments', []));
-    }
-
-    protected static function headers(): array
-    {
-        return [
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-            'X-Project-Key' => config('quickfix.project_key'),
-            'X-App-Env' => app()->environment(),
-        ];
     }
 }

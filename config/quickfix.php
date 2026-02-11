@@ -2,7 +2,10 @@
 
 return [
     'enabled' => env('QUICKFIX_ENABLED', true),
-    'endpoint' => env('QUICKFIX_ENDPOINT'),
-    'project_key' => env('QUICKFIX_PROJECT_KEY'),
-    'environments' => ['production', 'staging', 'local'], // Added 'local' for your testing
+    
+    // The device token for your specific phone
+    'fcm_token' => env('QUICKFIX_FCM_TOKEN'),
+
+    // Environments where the monitor is active
+    'environments' => ['production', 'staging', 'local'],
 ];
